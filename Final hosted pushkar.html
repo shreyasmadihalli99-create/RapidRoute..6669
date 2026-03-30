@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Pushkar - Premium Menu</title>
+    <style>
+        :root {
+            --primary: #e5990d; --accent: #ff9800; --bg: #fffbf5;
+            --text: #333; --white: #ffffff; --gray: #f4f4f4;
+            --success: #27ae60; --danger: #e74c3c;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        
+        /* --- SECRET ADMIN STAR --- */
+        #admin-star {
+            position: fixed; bottom: 20px; right: 20px; z-index: 9999;
+            font-size: 20px; opacity: 0.05; background: white;
+            width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+
+        #admin-panel {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 10000; padding: 20px; overflow-y: auto; box-sizing: border-box;
+        }
+
+        /* --- HERO SECTION --- */
+        #hero-page {
+            height: 100vh; width: 100%;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=1500&q=80');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: white; position: fixed; top: 0; left: 0; z-index: 3000;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #hero-page.hidden { transform: translateY(-100%); }
+
+        .explore-btn {
+            margin-top: 25px; background: var(--accent); color: white;
+            padding: 15px 45px; font-size: 1.3rem; font-weight: bold;
+            border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* --- MENU SECTION --- */
+        #menu-page { display: none; max-width: 900px; margin: 0 auto; padding-bottom: 450px; }
+        
+        .tabs-container { 
+            position: sticky; top: 0; background: white; display: flex; 
+            overflow-x: auto; padding: 15px; gap: 12px; z-index: 1000; 
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1); scrollbar-width: none; 
+        }
+        .tabs-container::-webkit-scrollbar { display: none; }
+        
+        .tab-btn { 
+            background: var(--gray); border: none; padding: 12px 25px; 
+            border-radius: 30px; white-space: nowrap; font-weight: 600; cursor: pointer; 
+            transition: 0.3s;
+        }
+        .tab-btn.active { background: var(--primary); color: white; transform: scale(1.05); }
+
+        .category-header { padding: 20px 15px 10px; font-size: 1.5rem; color: var(--primary); border-bottom: 2px solid var(--accent); margin: 10px 15px; }
+
+        .menu-item { 
+            background: white; padding: 18px; margin: 12px 15px; 
+            border-radius: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); 
+        }
+        
+        .item-main { display: flex; justify-content: space-between; align-items: center; }
+        .item-name { font-weight: 700; font-size: 1.05rem; }
+        .item-price { color: var(--primary); font-weight: 800; }
+
+        /* --- SIZE SELECTOR (HALF/FULL) --- */
+        .size-selector { display: flex; gap: 8px; margin-top: 12px; }
+        .size-btn { 
+            flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; 
+            background: #fff; font-size: 0.8rem; cursor: pointer; font-weight: 600;
+        }
+        .size-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .qty-controls { display: flex; align-items: center; gap: 12px; margin-top: 10px; justify-content: flex-end; }
+        .qty-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.2rem; }
+
+        /* --- FOOTER POPUP --- */
+        .cart-popup {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+            width: 100%; max-width: 550px; background: white; border-top-left-radius: 30px; border-top-right-radius: 30px;
+            padding: 25px; transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            z-index: 4000; box-sizing: border-box; box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+        }
+        .cart-popup.active { transform: translateX(-50%) translateY(0); }
+
+        .delivery-input { 
+            width: 100%; padding: 14px; margin-bottom: 12px; border: 2px solid #f0f0f0; 
+            border-radius: 12px; outline: none; box-sizing: border-box; font-size: 1rem;
+        }
+        .loc-btn { 
+            background: #2196F3; color: white; border: none; padding: 15px; 
+            width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; 
+            margin-bottom: 15px; font-size: 1rem;
+        }
+        .confirm-btn { 
+            background: #2e7d32; color: white; border: none; padding: 18px; 
+            width: 100%; border-radius: 15px; font-weight: 900; font-size: 1.2rem; 
+            display: none; cursor: pointer; text-transform: uppercase;
+        }
+
+        #success-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div id="admin-star" onclick="openAdmin()">★</div>
+
+    <div id="admin-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:15px; border-bottom: 1px solid #ddd;">
+            <h2 style="margin:0;">Pushkar Admin Panel</h2>
+            <button onclick="document.getElementById('admin-panel').style.display='none'" style="padding:10px 20px; background:#333; color:white; border:none; border-radius:8px;">EXIT</button>
+        </div>
+        <div id="admin-list"></div>
+    </div>
+
+    <div id="success-screen">
+        <div style="background: #e8f5e9; width: 100px; height: 100px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+            <span style="color: #2e7d32; font-size: 3rem;">✔</span>
+        </div>
+        <h2 style="margin:0;">ORDER SENT!</h2>
+        <p style="color:#666;">Hotel Pushkar is checking your order.</p>
+        <button class="explore-btn" onclick="location.reload()">New Order</button>
+    </div>
+
+    <section id="hero-page">
+        <h1 style="font-size: 3rem; margin: 0; letter-spacing: 2px;">HOTEL PUSHKAR</h1>
+        <p style="font-size: 1.2rem; margin-top: 10px; opacity: 0.9;">"Cooked With Passion, Served By Soul!"</p>
+        <div style="height:2px; width:60px; background:var(--accent); margin: 20px 0;"></div>
+        <p style="font-size: 1rem;">Pure Veg Family Restaurant | Hukkeri</p>
+        <button class="explore-btn" onclick="openMenu()">View Full Menu</button>
+    </section>
+
+    <main id="menu-page">
+        <div class="tabs-container" id="tabs"></div>
+        <div style="padding:15px;"><img id="cat-banner" style="width:100%; height:220px; object-fit:cover; border-radius:20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);" src=""></div>
+        
+        <h2 id="cat-title" class="category-header"></h2>
+        <div id="items-container"></div>
+
+        <div class="cart-popup" id="cart-popup">
+            <div style="font-weight:bold; margin-bottom:15px; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 10px;">Finalize Your Order</div>
+            
+            <input type="text" id="cust-name" class="delivery-input" placeholder="Your Full Name" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
+            <input type="tel" id="cust-phone" class="delivery-input" placeholder="10-Digit Mobile Number" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            
+            <button class="loc-btn" id="loc-btn" onclick="getGPS()">📍 Tap to Share Delivery Location</button>
+            
+            <div id="cart-summary" style="max-height: 120px; overflow-y: auto; font-size: 0.95rem; margin-bottom: 15px; padding: 10px; background: #fafafa; border-radius: 10px;"></div>
+            
+            <div style="border-top: 1px dashed #ccc; padding: 10px 0; font-size: 0.9rem; color: #777;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>Convenience Fee</span><span>₹5</span></div>
+                <div style="display:flex; justify-content:space-between;"><span>Delivery Service</span><span>₹10</span></div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; font-weight:900; color:var(--primary); font-size:1.5rem; margin-bottom: 15px;">
+                <span>GRAND TOTAL</span><span>₹<span id="grand-total">0</span></span>
+            </div>
+            
+            <button id="confirm-btn" class="confirm-btn" onclick="submitOrder()">Place Order Now</button>
+        </div>
+    </main>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2CcnPwPfW3lFfxQKf7x0-oarxx28K4K2INt8yFAl1d5hwdCwJpITJdFYJxrOuDwDm/exec";
+    let cart = {}; let gpsLink = "";
+    let disabledItems = JSON.parse(localStorage.getItem('pushkar_status')) || {};
+
+    const menuData = {
+        "STARTERS": [
+            { id: "s1", name: "ROASTED PAPAD", price: 30 },
+            { id: "s2", name: "FRY PAPAD", price: 40 },
+            { id: "s3", name: "MASALA PAPAD", price: 50 },
+            { id: "s4", name: "FINGER-CHIPS", price: 120 },
+            { id: "s5", name: "GOBI MANCHURIAN", price: 140 },
+            { id: "s6", name: "VEG 65", price: 140 },
+            { id: "s7", name: "VEG CRISPY", price: 170 },
+            { id: "s8", name: "VEG MANCHURIAN", price: 170 },
+            { id: "s9", name: "LEMON GOBI DRY", price: 180 },
+            { id: "s10", name: "PANEER MANCHURIAN", price: 190 },
+            { id: "s11", name: "PANEER 65", price: 190 },
+            { id: "s12", name: "PANEER MANCHURIAN GRAVY", price: 190 },
+            { id: "s13", name: "PANEER CRISPY", price: 190 },
+            { id: "s14", name: "PANEER HOT PAN", price: 190 },
+            { id: "s15", name: "PANEER PAKODA", price: 190 },
+            { id: "s16", name: "PANEER ROASTED", price: 190 },
+            { id: "s17", name: "PANEER CHILLY DRY", price: 200 },
+            { id: "s18", name: "PANEER CHILLY GRAVY", price: 200 },
+            { id: "s19", name: "PANEER GREEN CHILLY", price: 240 },
+            { id: "s20", name: "PANEER DRAGON", price: 230 },
+            { id: "s21", name: "PANEER SAUTE", price: 190 },
+            { id: "s22", name: "BABY CORN CHILLY", price: 190 },
+            { id: "s23", name: "BABY CORN CRISPY", price: 190 },
+            { id: "s24", name: "BABY CORN MANCHURIAN", price: 200 },
+            { id: "s25", name: "GOBI SCHEZWAN CHILLY", price: 190 },
+            { id: "s26", name: "HONEY CHILLY POTATO", price: 190 },
+            { id: "s27", name: "MUSHROOM MANCHURIAN", price: 190 },
+            { id: "s28", name: "MUSHROOM PEPPER DRY", price: 190 },
+            { id: "s29", name: "MUSHROOM 65", price: 180 },
+            { id: "s30", name: "ONION PAKODA", price: 180 },
+            { id: "s31", name: "PALAK PAKODA", price: 190 },
+            { id: "s32", name: "MIX PAKODA", price: 160 },
+            { id: "s33", name: "POTATO MANCHURI", price: 160 },
+            { id: "s34", name: "SPRING POTATO", price: 100 }
+        ],
+        "SOUPS": [
+            { id: "sp1", name: "TOMATO SOUP", prices: { "Half": 50, "Full": 80 } },
+            { id: "sp2", name: "VEG CLEAR SOUP", price: 90 },
+            { id: "sp3", name: "VEG MANCHOW SOUP", prices: { "Half": 50, "Full": 80 } },
+            { id: "sp4", name: "CREAM OF MUSHROOM", prices: { "Half": 60, "Full": 90 } },
+            { id: "sp5", name: "CREAM OF PALAK", prices: { "Half": 60, "Full": 90 } },
+            { id: "sp6", name: "CREAM OF VEG SOUP", prices: { "Half": 60, "Full": 90 } },
+            { id: "sp7", name: "VEG SWEET CORN SOUP", prices: { "Half": 60, "Full": 90 } },
+            { id: "sp8", name: "LEMON CORIANDER SOUP", prices: { "Half": 60, "Full": 90 } }
+        ],
+        "SALADS": [
+            { id: "sl1", name: "GREEN SALAD", price: 70 },
+            { id: "sl2", name: "CUCUMBER SALAD", price: 70 },
+            { id: "sl3", name: "TOMATO SALAD", price: 60 }
+        ],
+        "NOODLES": [
+            { id: "n1", name: "VEG HAKKA NOODLES", price: 140 },
+            { id: "n2", name: "SCHEZWAN NOODLES", price: 170 },
+            { id: "n3", name: "HONGKONG NOODLES", price: 180 }
+        ],
+        "CURD": [
+            { id: "c1", name: "BUTTER MILK MASALA", prices: { "Half": 40, "Full": 60 } },
+            { id: "c2", name: "BUTTER MILK PLAIN", prices: { "Half": 30, "Full": 50 } },
+            { id: "c3", name: "SWEET LASSI", price: 60 },
+            { id: "c4", name: "CURD", price: 20 },
+            { id: "c5", name: "CURD VATI", price: 20 }
+        ],
+        "KEBABS": [
+            { id: "k1", name: "PANEER TIKKA DRY", price: 210 },
+            { id: "k2", name: "MUSHROOM TIKKA DRY", price: 210 },
+            { id: "k3", name: "VEG HARA-BHARA KEBAB", price: 210 },
+            { id: "k4", name: "PANEER PAHADI KEBAB", price: 220 },
+            { id: "k5", name: "PANEER BANJARA KEBAB", price: 220 },
+            { id: "k6", name: "PANEER ANGARA KEBAB", price: 230 },
+            { id: "k7", name: "ALOO TIKKA KEBAB", price: 180 }
+        ],
+        "KAJU": [
+            { id: "kj1", name: "KAJU MASALA", price: 220 },
+            { id: "kj2", name: "KAJU CURRY", price: 220 },
+            { id: "kj3", name: "KAJU KADHAI", price: 220 },
+            { id: "kj4", name: "KAJU KOLHAPURI", price: 220 },
+            { id: "kj5", name: "KAJU PANEER MASALA", price: 230 },
+            { id: "kj6", name: "KAJU PANEER KASTHURI", price: 240 },
+            { id: "kj7", name: "KAJU PANEERI TOOFANI", price: 240 }
+        ],
+        "SPECIAL DISHES": [
+            { id: "sd1", name: "PANEER LABABDAR", price: 250 },
+            { id: "sd2", name: "PANEER MAKHMALI", price: 260 },
+            { id: "sd3", name: "PANEER DIGARI", price: 240 },
+            { id: "sd4", name: "VEG TOOFANI", price: 220 },
+            { id: "sd5", name: "VEG RANGEELA", price: 230 },
+            { id: "sd6", name: "VEG KHAZANA", price: 230 },
+            { id: "sd7", name: "VEG ANGETI", price: 240 },
+            { id: "sd8", name: "VEG CHTPATA", price: 290 },
+            { id: "sd9", name: "PUSHKAR SPECIAL VEG", price: 290 }
+        ],
+        "VEG-DISHES": [
+            { id: "vd1", name: "MIX VEG", price: 170 },
+            { id: "vd2", name: "VEG KOLHAPURI", price: 180 },
+            { id: "vd3", name: "VEG KADHAI", price: 190 },
+            { id: "vd4", name: "VEG TAWA", price: 190 },
+            { id: "vd5", name: "VEG KEEMA", price: 190 },
+            { id: "vd6", name: "VEG MARATAHA", price: 200 },
+            { id: "vd7", name: "VEG BHUNA MASALA", price: 220 },
+            { id: "vd8", name: "VEG HANDI", price: 200 },
+            { id: "vd9", name: "VEG MAHARAJA", price: 200 },
+            { id: "vd10", name: "VEG PATIYALA", price: 220 },
+            { id: "vd11", name: "VEG KOFTA CURRY", price: 220 },
+            { id: "vd12", name: "VEG CHIILI-MILLI", price: 230 },
+            { id: "vd13", name: "VEG MUMTAZ", price: 230 },
+            { id: "vd14", name: "VEG JAIPURI MASALA", price: 230 },
+            { id: "vd15", name: "VEG KASTHURI", price: 230 },
+            { id: "vd16", name: "VEG HYDERABADI", price: 230 },
+            { id: "vd17", name: "VEG DEEWANI HANDI", price: 230 },
+            { id: "vd18", name: "VEG MALWANI", price: 230 },
+            { id: "vd19", name: "VEG AFGHANI", price: 220 }
+        ],
+        "PANEER": [
+            { id: "p1", name: "PANEER MASALA", price: 200 },
+            { id: "p2", name: "PANEER MATAR", price: 210 },
+            { id: "p3", name: "PANEER KOLHAPURI", price: 210 },
+            { id: "p4", name: "PANEER KADAI", price: 210 },
+            { id: "p5", name: "PANEER TAWA", price: 210 },
+            { id: "p6", name: "PANEER HANDI", price: 220 },
+            { id: "p7", name: "PANEER RAJWADI", price: 220 },
+            { id: "p8", name: "PANEER CHINGARI", price: 220 },
+            { id: "p9", name: "PANEER TIKKA MASALA", price: 220 },
+            { id: "p10", name: "PANEER BURJI", price: 220 },
+            { id: "p11", name: "PANEER KASTHURI", price: 230 },
+            { id: "p12", name: "PANEER LAJAWAB", price: 230 },
+            { id: "p13", name: "PANEER TOOFANI", price: 230 }
+        ],
+        "SWEET DISHES": [
+            { id: "sw1", name: "PANEER BUTTER MASALA", price: 230 },
+            { id: "sw2", name: "KAJU MAKHANWALA", price: 230 },
+            { id: "sw3", name: "PANEER MAKHANWALA", price: 230 },
+            { id: "sw4", name: "KAJU BUTTER MASALA", price: 230 },
+            { id: "sw5", name: "VEG MAKHANWALA", price: 210 },
+            { id: "sw6", name: "VEG JAIPURI", price: 210 },
+            { id: "sw7", name: "METHI MATAR MALAI", price: 230 }
+        ],
+        "DAAL": [
+            { id: "d1", name: "PLAIN DAAL", price: 100 },
+            { id: "d2", name: "DAAL FRY", price: 120 },
+            { id: "d3", name: "DAAL TADKA", price: 130 },
+            { id: "d4", name: "DAAL KOLHAPURI", price: 130 },
+            { id: "d5", name: "DAAL BUTTER FRY", price: 140 },
+            { id: "d6", name: "DAAL PALAK", price: 130 },
+            { id: "d7", name: "DAAL HYDERABADI", price: 140 }
+        ],
+        "MUSHROOM": [
+            { id: "ms1", name: "MUSHROOM MASALA", price: 220 },
+            { id: "ms2", name: "MUSHROOM KADHAI", price: 220 },
+            { id: "ms3", name: "MUSHROOM HANDI", price: 230 },
+            { id: "ms4", name: "MUSHROOM BABY-CORN", price: 230 },
+            { id: "ms5", name: "MUSHROOM PANEER MASALA", price: 240 },
+            { id: "ms6", name: "MUSHROOM KAJU MASALA", price: 240 }
+        ],
+        "PALAK": [
+            { id: "pl1", name: "PLAIN PALAK", price: 160 },
+            { id: "pl2", name: "LEHSUNI PALAK", price: 170 },
+            { id: "pl3", name: "PALAK PANEER", price: 200 },
+            { id: "pl4", name: "PALAK MATAR", price: 190 },
+            { id: "pl5", name: "ALOO PALAK", price: 190 }
+        ],
+        "INDIAN RICE": [
+            { id: "ir1", name: "STEAMED RICE", prices: { "Half": 70, "Full": 90 } },
+            { id: "ir2", name: "JEERA RICE", prices: { "Half": 90, "Full": 120 } },
+            { id: "ir3", name: "GHEE RICE", price: 160 },
+            { id: "ir4", name: "CURD RICE", price: 160 },
+            { id: "ir5", name: "MASALA RICE", price: 150 },
+            { id: "ir6", name: "VEG PULAO", price: 170 },
+            { id: "ir7", name: "VEG BIRYANI", price: 180 },
+            { id: "ir8", name: "VEG HYDERABADI BIRYANI", price: 190 },
+            { id: "ir9", name: "GREEN-PEAS PULAO", price: 180 },
+            { id: "ir10", name: "KAJU MATAR PULAO", price: 190 },
+            { id: "ir11", name: "PANEER MATAR PULAO", price: 190 },
+            { id: "ir12", name: "DAAL-KHICHDI", price: 160 },
+            { id: "ir13", name: "PALAK KHICHDI", price: 160 },
+            { id: "ir14", name: "KASHMIRI PULAO", price: 200 },
+            { id: "ir15", name: "PUSHKAR SPECIAL BIRYANI", price: 220 },
+            { id: "ir16", name: "KUSHKA RICE", price: 160 }
+        ],
+        "CHINESE RICE": [
+            { id: "cr1", name: "VEG FRIED RICE", price: 180 },
+            { id: "cr2", name: "KAJU FRIED RICE", price: 190 },
+            { id: "cr3", name: "MUSHROOM FRIED RICE", price: 190 },
+            { id: "cr4", name: "VEG SCHEZWAN RICE", price: 190 },
+            { id: "cr5", name: "TRIPLE SCHEZWAN RICE", price: 210 }
+        ],
+        "ROTI": [
+            { id: "rt1", name: "ROTI", price: 20 },
+            { id: "rt2", name: "BUTTER ROTI", price: 25 },
+            { id: "rt3", name: "KULCHA", price: 35 },
+            { id: "rt4", name: "BUTTER KULCHA", price: 40 },
+            { id: "rt5", name: "GARLIC KULCHA", price: 45 },
+            { id: "rt6", name: "BUTTER GARLIC KULCHA", price: 50 },
+            { id: "rt7", name: "NAAN", price: 45 },
+            { id: "rt8", name: "BUTTER NAAN", price: 50 },
+            { id: "rt9", name: "BUTTER GARLIC NAAN", price: 55 },
+            { id: "rt10", name: "BUTTER CHEESE GARLIC NAAN", price: 70 },
+            { id: "rt11", name: "CHEESE GARLIC NAAN", price: 65 },
+            { id: "rt12", name: "PAROTHA PLAIN", price: 50 },
+            { id: "rt13", name: "BUTTER PAROTHA", price: 55 },
+            { id: "rt14", name: "ALOO PAROTHA", price: 80 },
+            { id: "rt15", name: "PANEER PAROTHA", price: 90 },
+            { id: "rt16", name: "WHEAT ROTI", price: 25 },
+            { id: "rt17", name: "BUTTER WHEAT ROTI", price: 30 }
+        ],
+        "HOT BEVERAGES": [
+            { id: "hb1", name: "TEA", price: 20 },
+            { id: "hb2", name: "COFFEE", price: 30 },
+            { id: "hb3", name: "BLACK TEA", price: 15 }
+        ],
+        "COLD BEVERAGES": [
+            { id: "cb1", name: "FRESH LIME SODA", prices: { "Half": 30, "Full": 50 } }
+        ],
+        "VEG THALI": [
+            { id: "th1", name: "PUSHKAR SPECIAL THALI", price: 180 }
+        ]
+    };
+
+    const categoryImages = {
+        "STARTERS": "https://www.spiritofindiapattaya.com/wp-content/uploads/2023/01/Masala-Papad.jpg",
+        "SOUPS": "https://tse2.mm.bing.net/th/id/OIP.oRISYhUxwpTtPbD-ka6C2gHaEJ?pid=Api&P=0&h=180",
+        "SALADS": "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=800&auto=format&fit=crop",
+        "NOODLES": "https://images.unsplash.com/photo-1585032226651-759b368d7246?q=80&w=800&auto=format&fit=crop",
+        "CURD": "https://www.indianhealthyrecipes.com/wp-content/uploads/2022/02/sweet-lassi-recipe.jpg",
+        "KEBABS": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?q=80&w=800&auto=format&fit=crop",
+        "KAJU": "https://tse1.mm.bing.net/th/id/OIP.kI9U49XWpC6i3GZ8l_MshwHaEK?rs=1&pid=ImgDetMain",
+        "SPECIAL DISHES": "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80",
+        "VEG-DISHES": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=800&auto=format&fit=crop",
+        "PANEER": "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=800&auto=format&fit=crop",
+        "SWEET DISHES": "https://images.unsplash.com/photo-1601050690597-df056fb47091?q=80&w=800&auto=format&fit=crop",
+        "DAAL": "https://images.unsplash.com/photo-1546833999-b9f581a1996d?q=80&w=800&auto=format&fit=crop",
+        "MUSHROOM": "https://images.unsplash.com/photo-1512058560366-cd24270083cd?q=80&w=800&auto=format&fit=crop",
+        "PALAK": "https://www.archanaskitchen.com/images/archanaskitchen/1-Author/Jyothi_Rajesh/Lehsuni_Palak.jpg",
+        "INDIAN RICE": "https://skydecklounge.in/wp-content/uploads/2022/01/Tandoori-Roti-Butter.jpg",
+        "CHINESE RICE": "https://images.unsplash.com/photo-1603133872878-684f208fb84b?q=80&w=800&auto=format&fit=crop",
+        "ROTI": "https://skydecklounge.in/wp-content/uploads/2022/01/Tandoori-Roti-Butter.jpg",
+        "HOT BEVERAGES": "https://www.indianhealthyrecipes.com/wp-content/uploads/2023/05/indian-masala-chai-tea.jpg",
+        "COLD BEVERAGES": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?q=80&w=800&auto=format&fit=crop",
+        "VEG THALI": "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?q=80&w=800&auto=format&fit=crop"
+    };
+
+    function openAdmin() {
+        if(prompt("Enter Admin PIN:") === "20106669") {
+            const list = document.getElementById('admin-list'); list.innerHTML = "";
+            document.getElementById('admin-panel').style.display = 'block';
+            for(let cat in menuData) {
+                list.innerHTML += `<div style="background:#f4f4f4; padding:10px; font-weight:bold; margin-top:10px;">${cat}</div>`;
+                menuData[cat].forEach(item => {
+                    const isOff = disabledItems[item.id];
+                    list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid #eee;">
+                        <span>${item.name}</span>
+                        <button onclick="toggle('${item.id}', this)" style="background:${isOff?'#e74c3c':'#27ae60'}; color:white; border:none; padding:6px 15px; border-radius:5px;">${isOff?'HIDDEN':'ACTIVE'}</button>
+                    </div>`;
+                });
+            }
+        }
+    }
+
+    function toggle(id, btn) {
+        if(disabledItems[id]) { delete disabledItems[id]; btn.innerText="ACTIVE"; btn.style.background="#27ae60"; }
+        else { disabledItems[id]=true; btn.innerText="HIDDEN"; btn.style.background="#e74c3c"; }
+        localStorage.setItem('pushkar_status', JSON.stringify(disabledItems));
+    }
+
+    function openMenu() {
+        document.getElementById('hero-page').classList.add('hidden');
+        setTimeout(() => {
+            document.getElementById('hero-page').style.display = 'none';
+            document.getElementById('menu-page').style.display = 'block';
+            renderTabs();
+        }, 800);
+    }
+
+    function renderTabs() {
+        const tabs = document.getElementById('tabs'); tabs.innerHTML = "";
+        Object.keys(menuData).forEach((cat, i) => {
+            const btn = document.createElement('button');
+            btn.className = "tab-btn" + (i===0?" active":""); btn.innerText = cat;
+            btn.onclick = (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active'); renderItems(cat);
+            };
+            tabs.appendChild(btn);
+        });
+        renderItems(Object.keys(menuData)[0]);
+    }
+
+    function renderItems(cat) {
+        document.getElementById('cat-title').innerText = cat;
+        document.getElementById('cat-banner').src = categoryImages[cat] || "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=80";
+        const container = document.getElementById('items-container'); container.innerHTML = "";
+        
+        menuData[cat].forEach(item => {
+            if(disabledItems[item.id]) return;
+            const hasSizes = !!item.prices;
+            const defaultPrice = hasSizes ? item.prices["Full"] : item.price;
+            const currentSizeSelected = hasSizes ? "Full" : "";
+
+            let sizeButtons = "";
+            if(hasSizes) {
+                sizeButtons = `
+                    <div class="size-selector">
+                        <button class="size-btn" onclick="selectSize(this, '${item.id}', 'Half', ${item.prices['Half']})">HALF (₹${item.prices['Half']})</button>
+                        <button class="size-btn active" onclick="selectSize(this, '${item.id}', 'Full', ${item.prices['Full']})">FULL (₹${item.prices['Full']})</button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML += `
+                <div class="menu-item" id="item-card-${item.id}" data-price="${defaultPrice}" data-size="${currentSizeSelected}">
+                    <div class="item-main">
+                        <span class="item-name">${item.name}</span>
+                        <span class="item-price" id="price-view-${item.id}">₹${defaultPrice}</span>
+                    </div>
+                    ${sizeButtons}
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="modifyQty('${item.id}', '${item.name}', -1)">-</button>
+                        <span id="qty-count-${item.id}" style="font-weight:bold; min-width:30px; text-align:center;">0</span>
+                        <button class="qty-btn" onclick="modifyQty('${item.id}', '${item.name}', 1)">+</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function selectSize(btn, id, sizeLabel, newPrice) {
+        const card = document.getElementById(`item-card-${id}`);
+        card.setAttribute('data-size', sizeLabel);
+        card.setAttribute('data-price', newPrice);
+        card.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`price-view-${id}`).innerText = "₹" + newPrice;
+    }
+
+    function modifyQty(id, baseName, change) {
+        const card = document.getElementById(`item-card-${id}`);
+        const size = card.getAttribute('data-size');
+        const price = parseInt(card.getAttribute('data-price'));
+        const cartKey = id + (size || ""); // Unique key for half/full items
+
+        if(!cart[cartKey]) {
+            cart[cartKey] = { name: baseName + (size ? ` (${size})` : ""), price: price, qty: 0, originId: id };
+        }
+
+        cart[cartKey].qty += change;
+        if(cart[cartKey].qty <= 0) delete cart[cartKey];
+
+        // Update individual item view (shows sum of half and full for that item name)
+        let totalQtyForThisItem = 0;
+        for(let k in cart) { if(cart[k].originId === id) totalQtyForThisItem += cart[k].qty; }
+        document.getElementById(`qty-count-${id}`).innerText = totalQtyForThisItem;
+
+        updateGlobalCart();
+    }
+
+    function updateGlobalCart() {
+        let subtotal = 0, itemCount = 0, listHtml = "";
+        for(let key in cart) { 
+            itemCount++; 
+            const cost = cart[key].qty * cart[key].price;
+            subtotal += cost; 
+            listHtml += `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${cart[key].name} x ${cart[key].qty}</span><span>₹${cost}</span></div>`; 
+        }
+        document.getElementById('cart-summary').innerHTML = listHtml || "Your cart is empty";
+        document.getElementById('grand-total').innerText = itemCount > 0 ? (subtotal + 15) : 0;
+        document.getElementById('cart-popup').classList.toggle('active', itemCount > 0);
+        if(itemCount === 0) resetGPSUI();
+    }
+
+    function getGPS() {
+        const btn = document.getElementById('loc-btn'); btn.innerText = "🛰️ ACCESSING GPS...";
+        navigator.geolocation.getCurrentPosition((p) => {
+            gpsLink = "https://www.google.com/maps?q=" + p.coords.latitude + "," + p.coords.longitude;
+            btn.style.display = "none"; document.getElementById('confirm-btn').style.display = "block";
+        }, () => { alert("Please enable GPS Location to proceed."); btn.innerText = "📍 Tap to Share Delivery Location"; }, {enableHighAccuracy: true});
+    }
+
+    function resetGPSUI() { gpsLink = ""; document.getElementById('loc-btn').style.display = "block"; document.getElementById('confirm-btn').style.display = "none"; }
+
+    async function submitOrder() {
+        const n = document.getElementById('cust-name').value;
+        const p = document.getElementById('cust-phone').value;
+        if(!n || p.length < 10) return alert("Valid Name and 10-digit Phone are required.");
+
+        const btn = document.getElementById('confirm-btn');
+        btn.innerText = "PROCESSING..."; btn.disabled = true;
+
+        let finalItemsString = ""; for(let k in cart) finalItemsString += `${cart[k].name}(x${cart[k].qty}), `;
+
+        const data = {
+            hotel: "Hotel Pushkar", name: n, phone: p, items: finalItemsString.slice(0, -2),
+            total: "₹" + document.getElementById('grand-total').innerText, location: gpsLink
+        };
+
+        try {
+            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data), mode: 'no-cors' });
+            document.getElementById('success-screen').style.display = "flex";
+        } catch(e) { alert("Network Error. Try again."); btn.disabled = false; btn.innerText = "Place Order Now"; }
+    }
+</script>
+</body>
+</html>

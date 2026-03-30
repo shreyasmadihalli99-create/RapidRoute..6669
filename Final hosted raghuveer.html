@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Raghuveer Café | Official Menu</title>
+    <style>
+        :root {
+            --primary: #e67e22;
+            --dark: #2d3436;
+            --light: #f8f9fa;
+            --danger: #e74c3c;
+            --success: #27ae60;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            background-color: var(--light);
+            color: var(--dark);
+            scroll-behavior: smooth;
+        }
+
+        /* --- ADMIN INTERFACE STYLES --- */
+        #admin-star {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            font-size: 24px;
+            cursor: pointer;
+            opacity: 0.2;
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #admin-panel {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            z-index: 10000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .admin-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .status-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            min-width: 70px;
+        }
+
+        .btn-on { background: var(--success); color: white; }
+        .btn-off { background: var(--danger); color: white; }
+
+        /* --- UI ELEMENTS --- */
+        #landing-page {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.7)), 
+                        url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800');
+            background-size: cover;
+            background-position: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .cafe-title { color: white; font-size: 2.8rem; margin: 0; font-weight: 800; }
+        .enter-btn {
+            margin-top: 25px;
+            background: var(--primary);
+            color: white;
+            padding: 18px 60px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        #menu-container { display: none; padding-bottom: 50vh; }
+
+        .category-nav {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: white;
+            display: flex;
+            overflow-x: auto;
+            padding: 12px 8px;
+            gap: 8px;
+            border-bottom: 1px solid #ddd;
+            scrollbar-width: none;
+        }
+        .category-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item {
+            padding: 8px 16px;
+            background: #eee;
+            border-radius: 20px;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            text-decoration: none;
+            color: #555;
+            font-weight: 700;
+        }
+
+        .section-img { width: 100%; height: 130px; object-fit: cover; display: block; }
+        .section-header {
+            padding: 15px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+            background: white;
+            border-bottom: 1px solid #eee;
+        }
+
+        .menu-card {
+            background: white;
+            margin-bottom: 1px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .item-name { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; display: block; }
+        
+        .size-group {
+            display: flex;
+            background: #f1f1f1;
+            border-radius: 6px;
+            padding: 2px;
+            width: fit-content;
+        }
+        .size-pill {
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            border: none;
+            background: none;
+            border-radius: 4px;
+            font-weight: 700;
+            color: #666;
+            cursor: pointer;
+        }
+        .size-pill.active { background: white; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        .price-text { font-weight: 800; font-size: 1.1rem; color: #000; display: block; }
+        .qty-box {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 5px;
+        }
+        .btn-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1.5px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        #cart-box {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            max-height: 85vh;
+            background: white;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            padding: 15px;
+        }
+
+        .details-input {
+            width: 100%; padding: 10px; margin-bottom: 8px;
+            border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;
+        }
+
+        .loc-btn {
+            background: #3498db; color: white; border: none; padding: 12px;
+            border-radius: 8px; font-weight: 700; margin-bottom: 10px; width: 100%;
+            cursor: pointer;
+        }
+
+        #cart-items-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            max-height: 200px;
+        }
+
+        .cart-row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .fee-row { display: flex; justify-content: space-between; padding: 2px 0; font-size: 0.75rem; color: #777; }
+
+        .cart-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 10px;
+        }
+
+        .order-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 1rem;
+            display: none;
+            cursor: pointer;
+        }
+
+        #success-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: white;
+            z-index: 5000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        footer { padding: 40px 20px 150px; text-align: center; background: white; font-size: 0.8rem; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div id="admin-star" onclick="checkAdmin()">★</div>
+
+    <div id="admin-panel">
+        <div class="admin-header">
+            <h2 style="margin:0; color:var(--primary)">Inventory Control</h2>
+            <button onclick="closeAdmin()" style="padding:10px; border-radius:8px; border:none; background:#333; color:white;">CLOSE</button>
+        </div>
+        <p style="font-size:0.85rem; color:#777;">Toggle items OFF to hide them from the customer menu.</p>
+        <div id="admin-controls-list"></div>
+    </div>
+
+    <div id="success-overlay">
+        <h2 style="color: #27ae60;">✔ Order Received!</h2>
+        <p>Your order has been sent directly to our kitchen. Please wait for delivery.</p>
+        <button class="enter-btn" onclick="location.reload()">Back to Menu</button>
+    </div>
+
+    <div id="landing-page">
+        <h1 class="cafe-title">Raghuveer Cafe</h1>
+        <p style="color:white">Fresh Flavours, Fast Delivery</p>
+        <button class="enter-btn" onclick="openMenu()">Explore Menu</button>
+    </div>
+
+    <div id="menu-container">
+        <div class="category-nav">
+            <a href="#pizzas" class="nav-item">Pizzas</a>
+            <a href="#burgers" class="nav-item">Burgers</a>
+            <a href="#sandwiches" class="nav-item">Sandwiches</a>
+            <a href="#fries" class="nav-item">Fries</a>
+            <a href="#momos" class="nav-item">Momos</a>
+            <a href="#pasta" class="nav-item">Pasta</a>
+            <a href="#maggie" class="nav-item">Maggie</a>
+            <a href="#nuggets" class="nav-item">Nuggets</a>
+            <a href="#frankie" class="nav-item">Frankie</a>
+            <a href="#coffee" class="nav-item">Cold Coffee</a>
+            <a href="#milkshakes" class="nav-item">Milkshakes</a>
+            <a href="#mastani" class="nav-item">Mastani</a>
+            <a href="#hotcoffee" class="nav-item">Hot Coffee</a>
+            <a href="#cadb" class="nav-item">Cad-B</a>
+            <a href="#mocktails" class="nav-item">Mocktails</a>
+            <a href="#combos" class="nav-item">Combos</a>
+        </div>
+
+        <section id="pizzas">
+            <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500" class="section-img">
+            <div class="section-header">Pizza Selection</div>
+            <div id="list-pizzas"></div>
+        </section>
+
+        <section id="burgers"><img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500" class="section-img"><div class="section-header">Burger Varieties</div><div id="list-burgers"></div></section>
+        <section id="sandwiches"><img src="https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=500" class="section-img"><div class="section-header">Sandwiches</div><div id="list-sandwiches"></div></section>
+        <section id="fries"><img src="https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?w=500" class="section-img"><div class="section-header">French Fries</div><div id="list-fries"></div></section>
+        <section id="momos"><div class="section-header">Momos</div><div id="list-momos"></div></section>
+        <section id="pasta"><div class="section-header">Pasta</div><div id="list-pasta"></div></section>
+        <section id="maggie"><div class="section-header">Maggie</div><div id="list-maggie"></div></section>
+        <section id="nuggets"><div class="section-header">Nuggets</div><div id="list-nuggets"></div></section>
+        <section id="frankie"><div class="section-header">Frankie</div><div id="list-frankie"></div></section>
+        <section id="coffee"><img src="https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=500" class="section-img"><div class="section-header">Cold Coffee</div><div id="list-coffee"></div></section>
+        <section id="milkshakes"><div class="section-header">Milkshakes</div><div id="list-milkshakes"></div></section>
+        <section id="mastani"><div class="section-header">Mastani</div><div id="list-mastani"></div></section>
+        <section id="hotcoffee"><div class="section-header">Hot Coffee</div><div id="list-hotcoffee"></div></section>
+        <section id="cadb"><div class="section-header">Cad-B</div><div id="list-cadb"></div></section>
+        <section id="mocktails"><div class="section-header">Mocktails & Coke</div><div id="list-mocktails"></div></section>
+        <section id="combos"><div class="section-header">All Special Combos</div><div id="list-combos"></div></section>
+
+        <footer>
+            <p><strong>Raghuveer Cafe</strong></p>
+            <p>Packing: Pizza ₹10 | Other ₹5<br>Delivery: ₹10 | Convenience: ₹5</p>
+        </footer>
+    </div>
+
+    <div id="cart-box">
+        <div style="font-weight: 800; margin-bottom: 8px; color: var(--primary);">Checkout Details</div>
+        
+        <input type="text" id="cust-name" class="details-input" placeholder="Your Name" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
+        <input type="tel" id="cust-phone" class="details-input" placeholder="10-Digit Mobile" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+        
+        <button id="loc-btn" class="loc-btn" onclick="getLocation()">📍 Share Delivery Location</button>
+        
+        <div id="cart-items-list"></div>
+        
+        <div id="fees-container" style="border-top: 1px dashed #ccc; padding-top: 5px; margin-bottom: 10px;">
+            <div class="fee-row"><span>Packing Charges</span><span id="pack-total">₹0</span></div>
+            <div class="fee-row"><span>Delivery Fee</span><span>₹10</span></div>
+            <div class="fee-row"><span>Convenience Fee</span><span>₹5</span></div>
+        </div>
+
+        <div class="cart-footer">
+            <div>
+                <span id="cart-total-qty" style="font-size: 0.8rem; color: #666;">0 Items</span><br>
+                <span style="font-size: 1.2rem; font-weight: 800;">Total: ₹<span id="cart-total-price">0</span></span>
+            </div>
+            <button id="main-order-btn" class="order-btn" onclick="placeOrder()">Confirm Order</button>
+        </div>
+    </div>
+
+    <script>
+        const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfYGXB2Lim7wtiFCYy8U7MtV9DN9X2Tm7zSkx-qYxPLSLRcUg/formResponse";
+        const ENTRY_DETAILS = "entry.1304197339";
+        const ENTRY_TOTAL = "entry.248975380";
+        const ENTRY_HOTEL = "entry.164020655";
+
+        let userLocation = "";
+        let cart = {};
+        let unavailableItems = JSON.parse(localStorage.getItem('raghuveer_unavailable')) || {};
+
+        const finalMenu = {
+            pizzas: [
+                { id: "pz1", name: "Veg Cheese Pizza", p: {S:120, M:140, B:240} },
+                { id: "pz2", name: "Sweet Corn Veg Cheese", p: {S:140, M:160, B:260} },
+                { id: "pz3", name: "Baby Corn Veg Cheese", p: {S:140, M:160, B:260} },
+                { id: "pz4", name: "Mushroom Veg Corn", p: {S:150, M:170, B:270} },
+                { id: "pz5", name: "Paneer Yummy Pizza", p: {S:160, M:180, B:280} },
+                { id: "pz6", name: "Chocolate Cheese Pizza", p: {S:140, M:160, B:260} },
+                { id: "pz7", name: "Mix Loaded Cheese Pizza", p: {S:160, M:190, B:290} },
+                { id: "pz8", name: "Jain Veg Cheese Pizza", p: {S:130, M:160, B:260} },
+                { id: "pz9", name: "Jain Cheese Burst Pizza", p: {S:180, M:210, B:310} },
+                { id: "pz10", name: "Yummy Cheese Burst Pizza", p: {S:180, M:210, B:310} },
+                { id: "pz11", name: "Italian Yummy Burst", p: {S:200, M:230, B:330} },
+                { id: "pz12", name: "Raghuveer Spl Tandoor Burst", p: {S:210, M:240, B:340} },
+                { id: "pz13", name: "Cheese Burst Punjabi Tadka", p: {S:230, M:260, B:360} },
+                { id: "pz14", name: "Raghuveer Spl Cheese Pizza", p: {S:200, M:230, B:330} },
+                { id: "pz15", name: "Dryfruit Raghuveer Spl Pizza", p: {S:220, M:250, B:350} }
+            ],
+            burgers: [
+                { id: "bg1", name: "Veg Aloo Tikki Burger", p: {Maida:60, Wheat:70} },
+                { id: "bg2", name: "Cheese Aloo Tikki Burger", p: {Maida:70, Wheat:80} },
+                { id: "bg3", name: "Raghuveer Spl Tikki Burger", p: {Maida:80, Wheat:90} },
+                { id: "bg4", name: "Veg Burger", p: {Maida:70, Wheat:80} },
+                { id: "bg5", name: "Veg Cheese Burger", p: {Maida:80, Wheat:90} },
+                { id: "bg6", name: "Raghuveer Special Burger", p: {Maida:90, Wheat:100} },
+                { id: "bg7", name: "Veg Cheese Tandoor Burger", p: {Maida:110, Wheat:120} },
+                { id: "bg8", name: "Chilli Potato Burger", p: {Maida:70, Wheat:80} },
+                { id: "bg9", name: "Chilli Potato Cheese Burger", p: {Maida:80, Wheat:90} },
+                { id: "bg10", name: "Raghuveer Special Chilli Burger", p: {Maida:90, Wheat:100} },
+                { id: "bg11", name: "Raghuveer Spl Chilli Tandoor", p: {Maida:110, Wheat:120} },
+                { id: "bg12", name: "Paneer Cheese Burger", p: {Maida:140, Wheat:150} },
+                { id: "bg13", name: "Raghuveer Special Paneer Burger", p: {Maida:150, Wheat:160} },
+                { id: "bg14", name: "Raghuveer Paneer Tandoor Burger", p: {Maida:160, Wheat:170} }
+            ],
+            sandwiches: [
+                { id: "sw1", name: "Veg Sandwich", p: {Maida:50, Wheat:60} },
+                { id: "sw2", name: "Veg Cheese Sandwich", p: {Maida:60, Wheat:70} },
+                { id: "sw3", name: "Veg Cheese Grill Sandwich", p: {Maida:70, Wheat:80} },
+                { id: "sw4", name: "Paneer Cheese Grill Sandwich", p: {Maida:90, Wheat:100} },
+                { id: "sw5", name: "Sweet Corn Cheese Grill", p: {Maida:80, Wheat:90} },
+                { id: "sw6", name: "Raghuveer Spl Cheese Grill", p: {Maida:100, Wheat:110} }
+            ],
+            fries: [
+                { id: "fr1", name: "Salted French Fries", p: {Small:60, Big:90} },
+                { id: "fr2", name: "Peri-Peri Fries", p: {Small:70, Big:100} },
+                { id: "fr3", name: "Liquid Cheese Fries", p: {Small:90, Big:120} },
+                { id: "fr4", name: "Double Cheese Fries", p: {Small:100, Big:130} },
+                { id: "fr5", name: "Raghuveer Special Fries", p: {Small:110, Big:140} },
+                { id: "fr6", name: "Masala French Fries", p: {Small:90, Big:120} },
+                { id: "fr7", name: "Masala Peri-Peri Fries", p: {Small:100, Big:130} },
+                { id: "fr8", name: "Liquid Cheese Masala Fries", p: {Small:110, Big:140} },
+                { id: "fr9", name: "Double Cheese Masala Fries", p: {Small:120, Big:150} },
+                { id: "fr10", name: "Raghuveer Spl Masala Fries", p: {Small:130, Big:160} }
+            ],
+            momos: [
+                { id: "mo1", name: "Mix Veg Momos", p: {Steam:100, Fry:110} },
+                { id: "mo2", name: "Paneer Momos", p: {Steam:110, Fry:120} },
+                { id: "mo3", name: "Cheese Corn Momos", p: {Steam:120, Fry:130} },
+                { id: "mo4", name: "Raghuveer Spl Momos", p: {Steam:140, Fry:150} }
+            ],
+            pasta: [
+                { id: "pa1", name: "White Pasta", p: 120 }, { id: "pa2", name: "White Cheese Pasta", p: 140 },
+                { id: "pa3", name: "Red Pasta", p: 130 }, { id: "pa4", name: "Red Cheese Pasta", p: 150 }
+            ],
+            maggie: [
+                { id: "mg1", name: "Regular Maggie", p: 70 }, { id: "mg2", name: "Masala Maggie", p: 80 },
+                { id: "mg3", name: "Vegetable Special Maggie", p: 90 }, { id: "mg4", name: "Cheese Maggie", p: 100 },
+                { id: "mg5", name: "Raghuveer Special Maggie", p: 110 }
+            ],
+            nuggets: [
+                { id: "nu1", name: "Veggie Fingers", p: 80 }, { id: "nu2", name: "Chilli-Garlic Bites", p: 80 },
+                { id: "nu3", name: "Cheese Corn Triangles", p: 100 }
+            ],
+            frankie: [
+                { id: "fn1", name: "Veg Frankie Roll", p: 100 }, { id: "fn2", name: "Veg Cheese Frankie Roll", p: 120 },
+                { id: "fn3", name: "Veg Cheese Tandoor Frankie", p: 130 }, { id: "fn4", name: "Raghuveer Spl Tandoor Frankie", p: 140 },
+                { id: "fn5", name: "Paneer Frankie Roll", p: 120 }, { id: "fn6", name: "Paneer Cheese Frankie Roll", p: 130 },
+                { id: "fn7", name: "Raghuveer Spl Paneer Frankie", p: 150 }
+            ],
+            coffee: [
+                { id: "cf1", name: "Regular Cold Coffee", p: {Glass:50, Jumbo:70} },
+                { id: "cf2", name: "Chocolate Cold Coffee", p: {Glass:60, Jumbo:80} },
+                { id: "cf3", name: "Ch. Cold Coffee + Icecream", p: {Glass:70, Jumbo:90} },
+                { id: "cf4", name: "Ch. Cold Coffee + Chocochips", p: {Glass:80, Jumbo:100} },
+                { id: "cf5", name: "Ch. Cold Coffee + Icecream + Chips", p: {Glass:100, Jumbo:120} }
+            ],
+            milkshakes: [
+                { id: "ms1", name: "Apple + Butterscotch", p: 70 }, { id: "ms2", name: "Apple + Icecream", p: 80 },
+                { id: "ms3", name: "Mango Milkshake", p: 80 }, { id: "ms4", name: "Sweet Strawberry", p: 80 },
+                { id: "ms5", name: "Crunchy Oreo Shake", p: 80 }, { id: "ms6", name: "Kitkat Milkshake", p: 90 },
+                { id: "ms7", name: "Vanilla Milkshake", p: 80 }, { id: "ms8", name: "Raghuveer Spl Mix Shake", p: 100 }
+            ],
+            mastani: [
+                { id: "mt1", name: "Mango Dryfruit Mastani", p: 100 }, { id: "mt2", name: "Butterscotch Dryfruit Mastani", p: 100 },
+                { id: "mt3", name: "Strawberry Dryfruit Mastani", p: 100 }, { id: "mt4", name: "Peshwai Mastani", p: 110 },
+                { id: "mt5", name: "Raghuveer Spl Mastani", p: 120 }
+            ],
+            hotcoffee: [
+                { id: "hc1", name: "Regular Hot Coffee", p: 30 }, { id: "hc2", name: "Couple Hot Coffee", p: 50 },
+                { id: "hc3", name: "Chocolate Hot Coffee", p: 40 }, { id: "hc4", name: "Couple Choc. Hot Coffee", p: 60 }
+            ],
+            cadb: [
+                { id: "cb1", name: "Chocolate Cad-B", p: 100 }, { id: "cb2", name: "Jumbo Chocolate Cad-B", p: 120 },
+                { id: "cb3", name: "Vanilla Cad-B", p: 100 }, { id: "cb4", name: "Mango Spl Cad-B", p: 110 }
+            ],
+            mocktails: [
+                { id: "mk1", name: "Watermelon Mocktail", p: 80 }, { id: "mk2", name: "Green Apple Mocktail", p: 80 },
+                { id: "mk3", name: "Blueberry Mocktail", p: 80 }, { id: "mk4", name: "Mojito Mint", p: 90 },
+                { id: "mk5", name: "Sprite/Coke/Thumps-up", p: 50 }
+            ],
+            combos: [
+                { id: "co1", name: "Regular Combo A (Pizza S+Coke)", p: 210 },
+                { id: "co2", name: "Regular Combo A (Veg Sandwich+Fries+Coffee)", p: 200 },
+                { id: "co3", name: "Regular Combo B (White Pasta+Fries+Coffee)", p: 260 },
+                { id: "co4", name: "Mini Combo (Veg Cheese Frankie+Fries+Coffee)", p: 270 },
+                { id: "co5", name: "Special Combo (Raghuveer Grill+Fries+Coffee)", p: 300 },
+                { id: "co6", name: "Nuggets Fries Combo (Nuggets+Fries+Coffee)", p: 250 },
+                { id: "co7", name: "Mini Combo A (Burger+Fries+Coffee)", p: 230 },
+                { id: "co8", name: "Special Combo A (Spl Burger+Spl Fries+Coke)", p: 310 },
+                { id: "co9", name: "Mini Combo B (Spl Burst Pizza S+Fries+Coffee)", p: 360 },
+                { id: "co10", name: "Special Combo B (Spl Pizza M+Fries+Coffee)", p: 450 }
+            ]
+        };
+
+        function checkAdmin() {
+            const pass = prompt("Enter Secret Access Code:");
+            if (pass === "20106669") openAdmin();
+            else alert("Incorrect Code.");
+        }
+
+        function openAdmin() {
+            const panel = document.getElementById('admin-panel');
+            const listContainer = document.getElementById('admin-controls-list');
+            listContainer.innerHTML = "";
+            panel.style.display = 'block';
+            for(let cat in finalMenu) {
+                listContainer.innerHTML += `<h3 style="background:#eee; padding:5px; margin-top:20px;">${cat.toUpperCase()}</h3>`;
+                finalMenu[cat].forEach(item => {
+                    const isOff = unavailableItems[item.id] === true;
+                    listContainer.innerHTML += `<div class="admin-item-row"><span>${item.name}</span><button class="status-btn ${isOff ? 'btn-off' : 'btn-on'}" onclick="toggleVisibility('${item.id}', this)">${isOff ? 'OFF' : 'ON'}</button></div>`;
+                });
+            }
+        }
+
+        function toggleVisibility(id, btn) {
+            if (unavailableItems[id]) { delete unavailableItems[id]; btn.innerText = "ON"; btn.className = "status-btn btn-on"; }
+            else { unavailableItems[id] = true; btn.innerText = "OFF"; btn.className = "status-btn btn-off"; }
+            localStorage.setItem('raghuveer_unavailable', JSON.stringify(unavailableItems));
+            renderAll();
+        }
+
+        function closeAdmin() { document.getElementById('admin-panel').style.display = 'none'; }
+        function openMenu() { document.getElementById('landing-page').style.display = 'none'; document.getElementById('menu-container').style.display = 'block'; renderAll(); }
+
+        function renderAll() {
+            renderList('list-pizzas', finalMenu.pizzas, 'pizza');
+            renderList('list-burgers', finalMenu.burgers, 'burger');
+            renderList('list-sandwiches', finalMenu.sandwiches, 'sandwich');
+            renderList('list-fries', finalMenu.fries, 'fries');
+            renderList('list-momos', finalMenu.momos, 'momos');
+            renderList('list-pasta', finalMenu.pasta, 'single');
+            renderList('list-maggie', finalMenu.maggie, 'single');
+            renderList('list-nuggets', finalMenu.nuggets, 'single');
+            renderList('list-frankie', finalMenu.frankie, 'single');
+            renderList('list-coffee', finalMenu.coffee, 'coffee');
+            renderList('list-milkshakes', finalMenu.milkshakes, 'single');
+            renderList('list-mastani', finalMenu.mastani, 'single');
+            renderList('list-hotcoffee', finalMenu.hotcoffee, 'single');
+            renderList('list-cadb', finalMenu.cadb, 'single');
+            renderList('list-mocktails', finalMenu.mocktails, 'single');
+            renderList('list-combos', finalMenu.combos, 'single');
+        }
+
+        function renderList(id, list, type) {
+            const container = document.getElementById(id);
+            container.innerHTML = '';
+            list.forEach(item => {
+                if (unavailableItems[item.id]) return;
+                let controls = ''; let price = item.p; let activeSize = '';
+                if (type === 'pizza') {
+                    price = item.p.S; activeSize = 'S';
+                    controls = `<div class="size-group"><button class="size-pill active" onclick="upd(this, ${item.p.S}, 'S')">S</button><button class="size-pill" onclick="upd(this, ${item.p.M}, 'M')">M</button><button class="size-pill" onclick="upd(this, ${item.p.B}, 'B')">B</button></div>`;
+                } else if (['burger','sandwich','fries','momos','coffee'].includes(type)) {
+                    const keys = Object.keys(item.p);
+                    price = item.p[keys[0]]; activeSize = keys[0];
+                    controls = `<div class="size-group"><button class="size-pill active" onclick="upd(this, ${item.p[keys[0]]}, '${keys[0]}')">${keys[0]}</button><button class="size-pill" onclick="upd(this, ${item.p[keys[1]]}, '${keys[1]}')">${keys[1]}</button></div>`;
+                }
+                container.innerHTML += `<div class="menu-card" data-name="${item.name}" data-size="${activeSize}" data-price="${price}"><div><span class="item-name">${item.name}</span>${controls}</div><div style="text-align:right"><span class="price-text">₹${price}</span><div class="qty-box"><button class="btn-circle" onclick="q(this,-1)">-</button><span class="qty-val">0</span><button class="btn-circle" onclick="q(this,1)">+</button></div></div></div>`;
+            });
+        }
+
+        function upd(btn, price, size) {
+            const card = btn.closest('.menu-card');
+            btn.parentElement.querySelectorAll('.size-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            card.querySelector('.price-text').innerText = '₹' + price;
+            card.setAttribute('data-price', price);
+            card.setAttribute('data-size', size);
+            card.querySelector('.qty-val').innerText = "0";
+            updateCartData(card.getAttribute('data-name'), size, price, 0);
+        }
+
+        function q(btn, change) {
+            const card = btn.closest('.menu-card');
+            const span = btn.parentElement.querySelector('.qty-val');
+            let val = parseInt(span.innerText) + change;
+            if (val < 0) val = 0;
+            span.innerText = val;
+            updateCartData(card.getAttribute('data-name'), card.getAttribute('data-size') || '', parseInt(card.getAttribute('data-price')), val);
+        }
+
+        function updateCartData(name, size, price, qty) {
+            const key = name + (size ? ` (${size})` : "");
+            if (qty > 0) cart[key] = { qty, price, total: qty * price, isPizza: key.toLowerCase().includes('pizza') };
+            else delete cart[key];
+            renderCart();
+        }
+
+        function renderCart() {
+            const box = document.getElementById('cart-box');
+            const list = document.getElementById('cart-items-list');
+            let html = ''; let subTotal = 0; let totalItems = 0; let packTotal = 0;
+            for (let k in cart) {
+                html += `<div class="cart-row"><span>${k} x ${cart[k].qty}</span><span>₹${cart[k].total}</span></div>`;
+                subTotal += cart[k].total; totalItems += cart[k].qty;
+                packTotal += cart[k].isPizza ? (cart[k].qty * 10) : (cart[k].qty * 5);
+            }
+            const grandTotal = totalItems > 0 ? (subTotal + packTotal + 10 + 5) : 0;
+            list.innerHTML = html;
+            document.getElementById('pack-total').innerText = "₹" + packTotal;
+            document.getElementById('cart-total-price').innerText = grandTotal;
+            document.getElementById('cart-total-qty').innerText = totalItems + " Items";
+            box.style.display = totalItems > 0 ? 'flex' : 'none';
+        }
+
+        function getLocation() {
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            if (name.length < 2) return alert("Please enter your name.");
+            if (phone.length !== 10) return alert("Please enter a valid 10-digit mobile number.");
+            const btn = document.getElementById('loc-btn');
+            btn.innerText = "🛰️ Locating...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    userLocation = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+                    btn.style.display = 'none';
+                    document.getElementById('main-order-btn').style.display = 'block';
+                }, () => {
+                    alert("Location access is required for delivery.");
+                    btn.innerText = "📍 Share Delivery Location";
+                }, {enableHighAccuracy: true});
+            } else { alert("Geolocation not supported."); }
+        }
+
+        function placeOrder() {
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value;
+            const total = document.getElementById('cart-total-price').innerText;
+            const btn = document.getElementById('main-order-btn');
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+
+            let itemsSummary = ""; 
+            for (let k in cart) { itemsSummary += `${k}(${cart[k].qty}), `; }
+            const fullDetails = `NAME: ${name} | PHONE: ${phone} | LOC: ${userLocation} | ITEMS: ${itemsSummary.slice(0, -2)}`;
+
+            const formData = new URLSearchParams();
+            formData.append(ENTRY_HOTEL, "Raghuveer Cafe");
+            formData.append(ENTRY_DETAILS, fullDetails);
+            formData.append(ENTRY_TOTAL, "₹" + total);
+
+            fetch(FORM_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            }).then(() => {
+                document.getElementById('success-overlay').style.display = 'flex';
+            }).catch(() => {
+                alert("Error sending order. Try again.");
+                btn.disabled = false;
+                btn.innerText = "Confirm Order";
+            });
+        }
+    </script>
+</body>
+</html>

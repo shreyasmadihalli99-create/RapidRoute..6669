@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>RapidRoute Home</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        margin:0;
+        font-family:'Montserrat', sans-serif;
+        background: linear-gradient(135deg, #FFE4C4, #FFC38C);
+        color:#6B4226;
+        min-height:100vh;
+        display:flex;
+        flex-direction:column;
+    }
+
+    /* Secret Star - Very Faint */
+    .secret-star {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 18px;
+        color: rgba(107, 66, 38, 0.05);
+        cursor: pointer;
+        z-index: 1000;
+    }
+
+    /* Admin Top Bar */
+    #admin-panel {
+        display: none;
+        background: #6B4226;
+        color: white;
+        padding: 12px;
+        text-align: center;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+    }
+
+    .exit-btn {
+        background: #FFC38C;
+        border: none;
+        padding: 6px 18px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        margin-left: 20px;
+    }
+
+    /* Grid Styling */
+    .main {
+        display:grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .hotel-card {
+        background: rgba(255,255,255,0.3);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    /* HIDES THE BOX COMPLETELY FOR CUSTOMERS */
+    .customer-hide {
+        display: none; 
+    }
+
+    /* SHOWS THE BOX FOR ADMIN (Dashed border to show it's hidden) */
+    .admin-mode .customer-hide {
+        display: flex !important;
+        opacity: 0.5;
+        border: 2px dashed #6B4226;
+    }
+
+    .admin-controls-box {
+        display: none; 
+        background: white;
+        padding: 10px;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .status-square {
+        padding: 4px 8px;
+        font-weight: bold;
+        color: white;
+        border-radius: 4px;
+        font-size: 11px;
+    }
+    .bg-green { background-color: #28a745; }
+    .bg-red { background-color: #dc3545; }
+
+    /* Switch */
+    .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #ccc; transition: .4s; border-radius: 20px;
+    }
+    .slider:before {
+        position: absolute; content: ""; height: 12px; width: 12px;
+        left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #6B4226; }
+    input:checked + .slider:before { transform: translateX(16px); }
+
+    header { display:flex; align-items:center; padding: 15px 20px; }
+    header img.logo { width:50px; height:50px; margin-right:15px; }
+    .hotel-card img { width: 100%; height: 120px; object-fit: cover; }
+    .hotel-card h3 { margin: 12px; font-size: 14px; text-align: center; }
+    a { text-decoration: none; color: inherit; }
+</style>
+</head>
+<body id="page-body">
+
+    <div class="secret-star" onclick="unlockAdmin()">★</div>
+
+    <div id="admin-panel">
+        EDIT MODE: Hidden boxes are dimmed
+        <button class="exit-btn" onclick="lockAdmin()">Save & Exit</button>
+    </div>
+
+    <header>
+        <img src="rapidroutelogo.png" class="logo" alt="Logo">
+        <div class="titles">
+            <h1>RapidRoute</h1>
+            <h2>Choose Your Hotel</h2>
+        </div>
+    </header>
+
+    <main class="main" id="hotel-grid">
+        </main>
+
+    <script>
+        const hotels = [
+            { name: "Raghuveer Café", img: "raghuveer.png", link: "raguveer.html" },
+            { name: "Raghavendra Vaibhav", img: "ragu.png", link: "Final hosted raghavendra.html" },
+            { name: "Hotel Pushkar", img: "push.png", link: "Pushkar.html" },
+            { name: "Hukkeri Dhaba", img: "hukkeri.png", link: "HukkeriDhaba1.html" },
+            { name: "Hotel Daneshwari", img: "DANESH.PNG", link: "Daneshwari Hotel1.html" },
+            { name: "Cake Mart", img: "cake.png", link: "CakeMart.html" }
+        ];
+
+        const grid = document.getElementById('hotel-grid');
+
+        // Create the boxes based on saved memory
+        hotels.forEach((hotel, index) => {
+            const id = index + 1;
+            const savedStatus = localStorage.getItem('h-visible-' + id);
+            const isOn = (savedStatus === null || savedStatus === 'on');
+
+            const card = document.createElement('div');
+            card.className = `hotel-card ${isOn ? '' : 'customer-hide'}`;
+            card.id = `card-${id}`;
+            card.innerHTML = `
+                <a href="${hotel.link}">
+                    <img src="${hotel.img}" alt="${hotel.name}">
+                    <h3>${hotel.name}</h3>
+                </a>
+                <div class="admin-controls-box" id="admin-box-${id}">
+                    <div id="sq-${id}" class="status-square ${isOn ? 'bg-green' : 'bg-red'}">${isOn ? 'ON' : 'OFF'}</div>
+                    <label class="switch">
+                        <input type="checkbox" id="check-${id}" ${isOn ? 'checked' : ''} onchange="updateVisibility(${id})">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+
+        function unlockAdmin() {
+            let pass = prompt("Enter Secret Code:");
+            if (pass === "20106669") {
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('page-body').classList.add('admin-mode');
+                let controls = document.getElementsByClassName('admin-controls-box');
+                for(let c of controls) { c.style.display = 'flex'; }
+            } else { alert("Access Denied"); }
+        }
+
+        function lockAdmin() {
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('page-body').classList.remove('admin-mode');
+            let controls = document.getElementsByClassName('admin-controls-box');
+            for(let c of controls) { c.style.display = 'none'; }
+        }
+
+        function updateVisibility(id) {
+            let isChecked = document.getElementById('check-' + id).checked;
+            let card = document.getElementById('card-' + id);
+            let square = document.getElementById('sq-' + id);
+            
+            if (isChecked) {
+                card.classList.remove('customer-hide');
+                square.innerText = "ON";
+                square.className = "status-square bg-green";
+                localStorage.setItem('h-visible-' + id, 'on');
+            } else {
+                card.classList.add('customer-hide');
+                square.innerText = "OFF";
+                square.className = "status-square bg-red";
+                localStorage.setItem('h-visible-' + id, 'off');
+            }
+        }
+    </script>
+</body>
+</html>
